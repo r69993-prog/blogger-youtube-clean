@@ -23,10 +23,13 @@ jobs:
         python -m pip install --upgrade pip
         pip install google-api-python-client google-auth-oauthlib google-auth-httplib2
 
-    - name: Create secret files
+    - name: Create client_secrets.json
       run: |
-        echo "${{ secrets.CLIENT_SECRETS_JSON }}" > client_secrets.json
-        echo "${{ secrets.TOKEN_PICKLE_BASE64 }}" | base64 -d > token.pickle
+        echo '${{ secrets.CLIENT_SECRETS_JSON }}' > client_secrets.json
+
+    - name: Create token.pickle
+      run: |
+        echo '${{ secrets.TOKEN_PICKLE_BASE64 }}' | base64 -d > token.pickle
 
     - name: Run script
       run: |
