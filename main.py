@@ -124,7 +124,7 @@ def search_youtube_videos_for_blog(blog_config, api_keys):
                     q=keyword,
                     part="snippet",
                     type="video",
-                    maxResults=blog_config.get("max_results_per_run", 2),
+                    maxResults=blog_config.get("max_results_per_run", 1),
                     order="relevance"
                 )
                 response = request.execute()
@@ -151,8 +151,9 @@ def search_youtube_videos_for_blog(blog_config, api_keys):
                 search_success = True
                 break
             except Exception as api_err:
-                if "quotaExceeded" in str(api_err) or "403" in str(api_err):
-                    print(f"[!] API Key โควตาเต็ม สลับไปใช้ Key สำรองถัดไป...")
+                err_msg = str(api_err)
+                if "quotaExceeded" in err_msg or "rateLimitExceeded" in err_msg or "403" in err_msg or "429" in err_msg:
+                    print(f"[!] API Key โควตาเต็มหรือติด Limit สลับไปใช้ Key สำรองถัดไป...")
                     continue
                 else:
                     print(f"[x] การค้นหาด้วยคีย์เวิร์ด '{keyword}' เกิดข้อผิดพลาด: {api_err}")
