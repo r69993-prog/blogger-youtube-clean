@@ -1,5 +1,8 @@
 {
-  "YOUTUBE_API_KEY": "AIzaSyDzEoKCgZ7uC7-bBBLl8qE6xV_J7hMgKqo",
+  "YOUTUBE_API_KEYS": [
+    "AIzaSyDzEoKCgZ7uC7-bBBLl8qE6xV_J7hMgKqo",
+    "AIzaSyDksMeZfPQse3CSl5yeDd_M2AwNtWX6FQ8"
+  ],
   "time_interval_hours": 2,
   "blogs": [
     {

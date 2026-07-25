@@ -100,48 +100,65 @@ def restructure_title_seo(raw_title, blog_config):
         return f"{seo_title} {clean_suffix}"
     return seo_title
 
-def search_youtube_videos_for_blog(blog_config, api_key):
-    if not api_key or api_key == "ใส่_YOUTUBE_API_KEY_ของคุณที่นี่":
-        print("[x] ไม่พบรหัส YOUTUBE_API_KEY ที่ถูกต้องในคอนฟิก")
+def search_youtube_videos_for_blog(blog_config, api_keys):
+    if not api_keys:
+        print("[x] ไม่พบรหัส YOUTUBE_API_KEYS ในคอนฟิก")
         return []
         
-    youtube = build('youtube', 'v3', developerKey=api_key)
+    if isinstance(api_keys, str):
+        api_keys = [api_keys]
+
     all_videos = []
     lang = blog_config.get("language", "EN")
     
     for keyword in blog_config.get("youtube_search_keywords", []):
-        try:
-            print(f"กำลังค้นหาคำว่า: {keyword} สำหรับ {blog_config['blog_name']}...")
-            request = youtube.search().list(
-                q=keyword,
-                part="snippet",
-                type="video",
-                maxResults=blog_config.get("max_results_per_run", 2),
-                order="relevance"
-            )
-            response = request.execute()
-            
-            if "items" in response:
-                for item in response["items"]:
-                    video_id = item["id"]["videoId"]
-                    snippet = item["snippet"]
-                    
-                    raw_title = snippet["title"]
-                    seo_title = restructure_title_seo(raw_title, blog_config)
-                    thumbnail_url = f"https://img.youtube.com/vi/{video_id}/maxresdefault.jpg"
-                    
-                    video_data = {
-                        'raw_title': raw_title,
-                        'seo_title': seo_title,
-                        'link': f"https://www.youtube.com/watch?v={video_id}",
-                        'video_id': video_id,
-                        'thumbnail': thumbnail_url,
-                        'description': clean_text_multilingual(snippet.get("description", ""), lang),
-                        'search_keyword': keyword
-                    }
-                    all_videos.append(video_data)
-        except Exception as api_err:
-            print(f"[x] การค้นหาด้วยคีย์เวิร์ด '{keyword}' เกิดข้อผิดพลาด: {api_err}")
+        search_success = False
+        for api_key in api_keys:
+            if not api_key or "ใส่_" in api_key:
+                continue
+                
+            try:
+                print(f"กำลังค้นหาคำว่า: {keyword} สำหรับ {blog_config['blog_name']} (ใช้ API Key...)...")
+                youtube = build('youtube', 'v3', developerKey=api_key)
+                request = youtube.search().list(
+                    q=keyword,
+                    part="snippet",
+                    type="video",
+                    maxResults=blog_config.get("max_results_per_run", 2),
+                    order="relevance"
+                )
+                response = request.execute()
+                
+                if "items" in response:
+                    for item in response["items"]:
+                        video_id = item["id"]["videoId"]
+                        snippet = item["snippet"]
+                        
+                        raw_title = snippet["title"]
+                        seo_title = restructure_title_seo(raw_title, blog_config)
+                        thumbnail_url = f"https://img.youtube.com/vi/{video_id}/maxresdefault.jpg"
+                        
+                        video_data = {
+                            'raw_title': raw_title,
+                            'seo_title': seo_title,
+                            'link': f"https://www.youtube.com/watch?v={video_id}",
+                            'video_id': video_id,
+                            'thumbnail': thumbnail_url,
+                            'description': clean_text_multilingual(snippet.get("description", ""), lang),
+                            'search_keyword': keyword
+                        }
+                        all_videos.append(video_data)
+                search_success = True
+                break
+            except Exception as api_err:
+                if "quotaExceeded" in str(api_err) or "403" in str(api_err):
+                    print(f"[!] API Key โควตาเต็ม สลับไปใช้ Key สำรองถัดไป...")
+                    continue
+                else:
+                    print(f"[x] การค้นหาด้วยคีย์เวิร์ด '{keyword}' เกิดข้อผิดพลาด: {api_err}")
+                    break
+        if not search_success:
+            print(f"[x] ทุก API Key ไม่สามารถใช้งานได้สำหรับคีย์เวิร์ด: {keyword}")
             
     return all_videos
 
@@ -214,7 +231,11 @@ def run_search_posting_multi_blog():
     
     try:
         service = get_blogger_service()
-        api_key = CONFIG.get("YOUTUBE_API_KEY", "")
+        
+        api_keys = CONFIG.get("YOUTUBE_API_KEYS", [])
+        if not api_keys and CONFIG.get("YOUTUBE_API_KEY"):
+            api_keys = [CONFIG.get("YOUTUBE_API_KEY")]
+            
         blogs_list = CONFIG.get("blogs", [])
         
         for blog in blogs_list:
@@ -226,7 +247,7 @@ def run_search_posting_multi_blog():
             print(f"\n--- เริ่มต้นประมวลผลบล็อก: {blog_name} ({blog_id}) ---")
             
             existing_titles, latest_schedule_time = get_existing_posts_data(service, blog_id)
-            videos = search_youtube_videos_for_blog(blog, api_key)
+            videos = search_youtube_videos_for_blog(blog, api_keys)
             
             if not videos:
                 print(f"ไม่พบวิดีโอจากคีย์เวิร์ดสำหรับบล็อก: {blog_name}")
