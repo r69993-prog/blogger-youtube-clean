@@ -93,49 +93,73 @@ def main():
     youtube, blogger = get_services()
 
     for blog in config.get('blogs', []):
-        blog_name = blog.get('name', 'Unknown Blog')
-        blog_id = blog.get('blog_id')
-        keywords = blog.get('keywords', [])
+        blog_name = blog.get('blog_name', 'Unknown Blog')
+        blog_id = blog.get('BLOG_ID')
+        keywords = blog.get('youtube_search_keywords', [])
+        seo_suffix = blog.get('seo_title_suffix', '')
+        base_labels = blog.get('blogger_labels', [])
+        max_posts = blog.get('max_results_per_run', 1)
         
+        if not blog_id:
+            print(f"[!] ข้ามการทำงานเนื่องจากไม่พบ BLOG_ID สำหรับ: {blog_name}")
+            continue
+
         print(f"\n--- เริ่มต้นประมวลผลบล็อก: {blog_name} ({blog_id}) ---")
         
-        existing_titles = get_existing_posts(blogger, blog_id)
+        try:
+            existing_titles = get_existing_posts(blogger, blog_id)
+        except Exception as e:
+            print(f"[!] ไม่สามารถดึงข้อมูลโพสต์เดิมได้สำหรับบล็อก {blog_name}: {e}")
+            continue
+
         found_videos = []
         seen_video_ids = set()
 
         for kw in keywords:
             print(f"กำลังค้นหาคำว่า: {kw} สำหรับ {blog_name}...")
-            items = search_youtube(youtube, kw, max_results=5)
-            for item in items:
-                v_id = item['id']['videoId']
-                if v_id not in seen_video_ids:
-                    seen_video_ids.add(v_id)
-                    found_videos.append((kw, item))
+            try:
+                items = search_youtube(youtube, kw, max_results=5)
+                for item in items:
+                    v_id = item['id']['videoId']
+                    if v_id not in seen_video_ids:
+                        seen_video_ids.add(v_id)
+                        found_videos.append((kw, item))
+            except Exception as e:
+                print(f"[!] ข้อผิดพลาดในการค้นหา YouTube สำหรับคีย์เวิร์ด {kw}: {e}")
 
         print(f"พบวิดีโอจากการค้นหาสำหรับบล็อก {blog_name} ทั้งหมด {len(found_videos)} รายการ")
         
         added_count = 0
         for kw, item in found_videos:
+            if added_count >= max_posts:
+                break
+
             v_id = item['id']['videoId']
             raw_title = item['snippet']['title']
             raw_desc = item['snippet']['description']
             
             clean_kw = clean_tag(kw)
-            post_title = f"Deep Dive: {raw_title} - Comprehensive Analysis of {clean_kw}"
+            
+            if seo_suffix:
+                post_title = f"Deep Dive: {raw_title} - {seo_suffix}"
+            else:
+                post_title = f"Deep Dive: {raw_title} - Comprehensive Analysis of {clean_kw}"
             
             if raw_title.strip() in existing_titles or post_title.strip() in existing_titles:
                 print(f"[-] ข้ามโพสต์ซ้ำ: {raw_title}")
                 continue
 
-            labels = [clean_kw, "Video"]
+            labels = list(base_labels)
+            if clean_kw not in labels:
+                labels.append(clean_kw)
+
             publish_time = datetime.now(timezone.utc).isoformat()
             
             try:
                 create_blogger_post(blogger, blog_id, post_title, v_id, raw_desc, labels, publish_time)
-                print(f"[+] [1] ตั้งเวลาสำเร็จบนบล็อก ({blog_name}): {post_title} | Labels: {labels}")
+                print(f"[+] [{added_count + 1}] ตั้งเวลาสำเร็จบนบล็อก ({blog_name}): {post_title} | Labels: {labels}")
                 existing_titles.add(post_title.strip())
                 added_count += 1
-                break
             except Exception as e:
                 print(f"[!] เกิดข้อผิดพลาดในการสร้างโพสต์: {e}")
 
