@@ -1,41 +1,36 @@
-import os
-import pickle
-from datetime import datetime
-import json
-from google_auth_oauthlib.flow import InstalledAppFlow
-from google.auth.transport.requests import Request
-from googleapiclient.discovery import build
+name: Run Blogger YouTube Bot
 
-# กำหนด Path พื้นฐานให้อ้างอิงจากตำแหน่งของไฟล์ main.py เสมอ
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-TOKEN_PATH = os.path.join(BASE_DIR, 'token.pickle')
-CLIENT_SECRETS_PATH = os.path.join(BASE_DIR, 'client_secrets.json')
-CONFIG_PATH = os.path.join(BASE_DIR, 'config.json')
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
 
-SCOPES = ['https://www.googleapis.com/auth/blogger']
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
 
-def main():
-    print("====================================")
-    print(f"[!] เริ่มทำงานรอบอัตโนมัติ เวลา: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    print("====================================")
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
-    if not os.path.exists(TOKEN_PATH):
-        raise FileNotFoundError(f"ไม่พบไฟล์ token.pickle ที่ path: {TOKEN_PATH}")
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
 
-    with open(TOKEN_PATH, 'rb') as token:
-        creds = pickle.load(token)
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install google-api-python-client google-auth-oauthlib google-auth-httplib2
 
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            flow = InstalledAppFlow.from_client_secrets_file(CLIENT_SECRETS_PATH, SCOPES)
-            creds = flow.run_local_server(port=8080)
-        with open(TOKEN_PATH, 'wb') as token:
-            pickle.dump(creds, token)
+    - name: Create client_secrets.json
+      run: |
+        echo '${{ secrets.CLIENT_SECRETS_JSON }}' > client_secrets.json
 
-    blogger_service = build('blogger', 'v3', credentials=creds)
-    print("เชื่อมต่อ Google API สำเร็จ พร้อมทำงานต่อ")
+    - name: Create token.pickle
+      run: |
+        echo '${{ secrets.TOKEN_PICKLE_BASE64 }}' | base64 -d > token.pickle
 
-if __name__ == '__main__':
-    main()
+    - name: Run script
+      run: |
+        python main.py
