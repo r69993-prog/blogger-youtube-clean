@@ -5,14 +5,14 @@
     "AIzaSyANbVpsizsoyuOwJN_8oSgHgsMzVdejRdM",
     "AIzaSyDzEoKCgZ7uC7-bBBLl8qE6xV_J7hMgKqo"
   ],
-  "time_interval_hours": 3,
+  "time_interval_hours": 1,
   "blogs": [
     {
       "blog_name": "ระบบกลไก",
       "BLOG_ID": "7261621395427988771",
       "language": "TH",
       "seo_title_suffix": "ระบบกลไก",
-      "max_results_per_run": 1,
+      "max_results_per_run": 2,
       "youtube_search_keywords": [
         "Mechanism design",
         "ระบบกลไก",
@@ -29,7 +29,7 @@
       "BLOG_ID": "6321192511447492789",
       "language": "EN",
       "seo_title_suffix": "engineering",
-      "max_results_per_run": 1,
+      "max_results_per_run": 2,
       "youtube_search_keywords": [
         "industrial machinery",
         "mechanical engineering "
@@ -45,7 +45,7 @@
       "BLOG_ID": "7707792750976542809",
       "language": "EN",
       "seo_title_suffix": "Engineering View",
-      "max_results_per_run": 1,
+      "max_results_per_run": 2,
       "youtube_search_keywords": [
         "machine design",
         "Mechanical system",
@@ -62,7 +62,7 @@
       "BLOG_ID": "2962551177226991802",
       "language": "EN",
       "seo_title_suffix": "Tech Intelligence",
-      "max_results_per_run": 1,
+      "max_results_per_run": 2,
       "youtube_search_keywords": [
         "knowledge Engineering",
         "technology",
@@ -78,7 +78,7 @@
       "BLOG_ID": "2882579450350054162",
       "language": "TH",
       "seo_title_suffix": "ระบบCNC",
-      "max_results_per_run": 1,
+      "max_results_per_run": 2,
       "youtube_search_keywords": [
         "CNC",
         "CNC Machine"
