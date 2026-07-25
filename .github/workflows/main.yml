@@ -29,7 +29,7 @@ jobs:
 
     - name: Create token.pickle
       run: |
-        echo '${{ secrets.TOKEN_PICKLE_BASE64 }}' | base64 -d > token.pickle
+        echo "${{ secrets.TOKEN_PICKLE_BASE64 }}" | tr -d '\n' | base64 -d > token.pickle
 
     - name: Run script
       run: |
