@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from googleapiclient.discovery import build
 from google.auth.transport.requests import Request
 
-def get_services():
+def get_blogger_service():
     creds = None
     if os.path.exists('token.pickle'):
         with open('token.pickle', 'rb') as token:
@@ -24,9 +24,13 @@ def get_services():
         else:
             raise Exception("Invalid or missing credentials. Please generate a new token.pickle.")
 
-    youtube = build('youtube', 'v3', credentials=creds)
     blogger = build('blogger', 'v3', credentials=creds)
-    return youtube, blogger
+    return blogger
+
+def get_youtube_service(api_key):
+    if not api_key:
+        raise Exception("YOUTUBE_API_KEY is missing in config.json")
+    return build('youtube', 'v3', developerKey=api_key)
 
 def clean_tag(text):
     clean = re.sub(r'[^a-zA-Z0-9ก-๙\s]', '', text)
@@ -90,7 +94,9 @@ def main():
     with open('config.json', 'r', encoding='utf-8') as f:
         config = json.load(f)
 
-    youtube, blogger = get_services()
+    api_key = config.get('YOUTUBE_API_KEY')
+    youtube = get_youtube_service(api_key)
+    blogger = get_blogger_service()
 
     for blog in config.get('blogs', []):
         blog_name = blog.get('blog_name', 'Unknown Blog')
