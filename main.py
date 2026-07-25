@@ -100,67 +100,71 @@ def restructure_title_seo(raw_title, blog_config):
         return f"{seo_title} {clean_suffix}"
     return seo_title
 
-def search_youtube_videos_for_blog(blog_config, api_keys):
+def search_youtube_videos_for_blog(blog_config, api_keys, exhausted_keys):
     if not api_keys:
         print("[x] ไม่พบรหัส YOUTUBE_API_KEYS ในคอนฟิก")
         return []
-        
-    if isinstance(api_keys, str):
-        api_keys = [api_keys]
 
     all_videos = []
     lang = blog_config.get("language", "EN")
+    keywords = blog_config.get("youtube_search_keywords", [])
     
-    for keyword in blog_config.get("youtube_search_keywords", []):
-        search_success = False
-        for api_key in api_keys:
-            if not api_key or "ใส่_" in api_key:
-                continue
-                
-            try:
-                print(f"กำลังค้นหาคำว่า: {keyword} สำหรับ {blog_config['blog_name']} (ใช้ API Key...)...")
-                youtube = build('youtube', 'v3', developerKey=api_key)
-                request = youtube.search().list(
-                    q=keyword,
-                    part="snippet",
-                    type="video",
-                    maxResults=blog_config.get("max_results_per_run", 1),
-                    order="relevance"
-                )
-                response = request.execute()
-                
-                if "items" in response:
-                    for item in response["items"]:
-                        video_id = item["id"]["videoId"]
-                        snippet = item["snippet"]
-                        
-                        raw_title = snippet["title"]
-                        seo_title = restructure_title_seo(raw_title, blog_config)
-                        thumbnail_url = f"https://img.youtube.com/vi/{video_id}/maxresdefault.jpg"
-                        
-                        video_data = {
-                            'raw_title': raw_title,
-                            'seo_title': seo_title,
-                            'link': f"https://www.youtube.com/watch?v={video_id}",
-                            'video_id': video_id,
-                            'thumbnail': thumbnail_url,
-                            'description': clean_text_multilingual(snippet.get("description", ""), lang),
-                            'search_keyword': keyword
-                        }
-                        all_videos.append(video_data)
-                search_success = True
-                break
-            except Exception as api_err:
-                err_msg = str(api_err)
-                if "quotaExceeded" in err_msg or "rateLimitExceeded" in err_msg or "403" in err_msg or "429" in err_msg:
-                    print(f"[!] API Key โควตาเต็มหรือติด Limit สลับไปใช้ Key สำรองถัดไป...")
-                    continue
-                else:
-                    print(f"[x] การค้นหาด้วยคีย์เวิร์ด '{keyword}' เกิดข้อผิดพลาด: {api_err}")
-                    break
-        if not search_success:
-            print(f"[x] ทุก API Key ไม่สามารถใช้งานได้สำหรับคีย์เวิร์ด: {keyword}")
+    if not keywords:
+        return []
+
+    selected_keyword = random.choice(keywords)
+    search_success = False
+
+    for api_key in api_keys:
+        if not api_key or "ใส่_" in api_key or api_key in exhausted_keys:
+            continue
             
+        try:
+            print(f"กำลังค้นหาคำว่า: {selected_keyword} สำหรับ {blog_config['blog_name']} (ใช้ API Key...)...")
+            youtube = build('youtube', 'v3', developerKey=api_key)
+            request = youtube.search().list(
+                q=selected_keyword,
+                part="snippet",
+                type="video",
+                maxResults=blog_config.get("max_results_per_run", 1),
+                order="relevance"
+            )
+            response = request.execute()
+            
+            if "items" in response:
+                for item in response["items"]:
+                    video_id = item["id"]["videoId"]
+                    snippet = item["snippet"]
+                    
+                    raw_title = snippet["title"]
+                    seo_title = restructure_title_seo(raw_title, blog_config)
+                    thumbnail_url = f"https://img.youtube.com/vi/{video_id}/maxresdefault.jpg"
+                    
+                    video_data = {
+                        'raw_title': raw_title,
+                        'seo_title': seo_title,
+                        'link': f"https://www.youtube.com/watch?v={video_id}",
+                        'video_id': video_id,
+                        'thumbnail': thumbnail_url,
+                        'description': clean_text_multilingual(snippet.get("description", ""), lang),
+                        'search_keyword': selected_keyword
+                    }
+                    all_videos.append(video_data)
+            search_success = True
+            break
+        except Exception as api_err:
+            err_msg = str(api_err)
+            if "quotaExceeded" in err_msg or "rateLimitExceeded" in err_msg or "403" in err_msg or "429" in err_msg:
+                print(f"[!] API Key โควตาเต็ม บันทึกจำเพื่อข้าม Key นี้ในรอบปัจจุบัน...")
+                exhausted_keys.add(api_key)
+                continue
+            else:
+                print(f"[x] การค้นหาด้วยคีย์เวิร์ด '{selected_keyword}' เกิดข้อผิดพลาด: {api_err}")
+                break
+
+    if not search_success:
+        print(f"[x] ทุก API Key เต็มหมดแล้ว ไม่สามารถใช้งานคีย์เวิร์ด: {selected_keyword}")
+        
     return all_videos
 
 def generate_article_html(video, lang="EN"):
@@ -238,17 +242,18 @@ def run_search_posting_multi_blog():
             api_keys = [CONFIG.get("YOUTUBE_API_KEY")]
             
         blogs_list = CONFIG.get("blogs", [])
+        exhausted_keys = set()
         
         for blog in blogs_list:
             blog_id = blog.get("BLOG_ID")
             blog_name = blog.get("blog_name", "Unknown Blog")
             lang = blog.get("language", "EN")
-            interval_hours = CONFIG.get('time_interval_hours', 1)
+            interval_hours = CONFIG.get('time_interval_hours', 3)
             
             print(f"\n--- เริ่มต้นประมวลผลบล็อก: {blog_name} ({blog_id}) ---")
             
             existing_titles, latest_schedule_time = get_existing_posts_data(service, blog_id)
-            videos = search_youtube_videos_for_blog(blog, api_keys)
+            videos = search_youtube_videos_for_blog(blog, api_keys, exhausted_keys)
             
             if not videos:
                 print(f"ไม่พบวิดีโอจากคีย์เวิร์ดสำหรับบล็อก: {blog_name}")
