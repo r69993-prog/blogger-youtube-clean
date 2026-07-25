@@ -166,8 +166,10 @@ def main():
                 print(f"[+] [{added_count + 1}] ตั้งเวลาสำเร็จบนบล็อก ({blog_name}): {post_title} | Labels: {labels}")
                 existing_titles.add(post_title.strip())
                 added_count += 1
+                time.sleep(3)
             except Exception as e:
                 print(f"[!] เกิดข้อผิดพลาดในการสร้างโพสต์: {e}")
+                time.sleep(5)
 
         print(f"เสร็จสิ้นการทำงานบล็อก: {blog_name} เพิ่มได้ {added_count} บทความ")
 
