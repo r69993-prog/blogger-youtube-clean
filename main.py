@@ -19,30 +19,35 @@ BLOG_CONFIGS = [
     {
         "blog_id": "7261621395427988771",
         "blog_name": "ระบบกลไก",
+        "lang": "th",
         "keywords": ["Mechanism design", "Kinematics", "Linkage mechanism", "Mechanical gears", "Mechanical transmission"],
         "labels": ["Mechanism", "Engineering", "Kinematics"]
     },
     {
         "blog_id": "6321192511447492789",
         "blog_name": "Industrial (English)",
+        "lang": "en",
         "keywords": ["industrial machinery", "factory automation", "manufacturing technology", "heavy industry", "industrial engineering"],
         "labels": ["Industrial", "Automation", "Engineering"]
     },
     {
         "blog_id": "7707792750976542809",
         "blog_name": "Machine & Mechanical Design (ใหม่)",
+        "lang": "th",
         "keywords": ["machine design", "mechanical design", "CAD design", "3D CAD modeling", "solidworks design"],
         "labels": ["MachineDesign", "Mechanical", "CAD"]
     },
     {
         "blog_id": "2962551177226991802",
         "blog_name": "Knowledge Engineering (ใหม่)",
+        "lang": "th",
         "keywords": ["knowledge Engineering", "engineering principles", "engineering fundamentals", "technical engineering", "engineering education"],
         "labels": ["Knowledge", "Engineering", "Technical"]
     },
     {
         "blog_id": "2882579450350054162",
         "blog_name": "CNC Machine Center (ใหม่)",
+        "lang": "th",
         "keywords": ["CNC", "CNC milling", "CNC machining", "CNC center", "machining center"],
         "labels": ["CNC", "Machining", "Milling"]
     }
@@ -130,17 +135,25 @@ def get_blogger_client():
 def sanitize_text(text):
     return html.unescape(text).strip()
 
-def generate_post_title(blog_name, raw_title):
+def generate_post_title(blog_name, raw_title, lang="th"):
     clean_title = sanitize_text(raw_title)
-    patterns = [
-        f"เจาะลึกวิศวกรรม: {clean_title} | {blog_name}",
-        f"วิเคราะห์ระบบและกลไก: {clean_title}",
-        f"การทำงานเชิงลึก: {clean_title} ({blog_name})",
-        f"นวัตกรรมทางเทคโนโลยี: {clean_title}"
-    ]
+    if lang == "en":
+        patterns = [
+            f"Technical Analysis: {clean_title} | {blog_name}",
+            f"Engineering Insights: {clean_title}",
+            f"In-Depth Overview: {clean_title} ({blog_name})",
+            f"Technology & Innovation: {clean_title}"
+        ]
+    else:
+        patterns = [
+            f"เจาะลึกวิศวกรรม: {clean_title} | {blog_name}",
+            f"วิเคราะห์ระบบและกลไก: {clean_title}",
+            f"การทำงานเชิงลึก: {clean_title} ({blog_name})",
+            f"นวัตกรรมทางเทคโนโลยี: {clean_title}"
+        ]
     return random.choice(patterns)
 
-def generate_post_content(video_id, title, description, blog_name):
+def generate_post_content(video_id, title, description, blog_name, lang="th"):
     clean_title = sanitize_text(title)
     clean_desc = sanitize_text(description)
     
@@ -148,7 +161,24 @@ def generate_post_content(video_id, title, description, blog_name):
     video_url = f"https://www.youtube.com/watch?v={video_id}"
     embed_url = f"https://www.youtube.com/embed/{video_id}"
     
-    formatted_description = clean_desc if clean_desc else f"รายงานและรายละเอียดทางเทคนิคสำหรับหัวข้อ {clean_title}"
+    if lang == "en":
+        formatted_description = clean_desc if clean_desc else f"Technical documentation and detailed report for {clean_title}."
+        
+        overview_heading = f"Technical Overview: {clean_title}"
+        overview_text = f"This article provides an in-depth technical analysis of '{clean_title}', covering key mechanism structures, engineering operational principles, and essential parameters for technical understanding."
+        details_heading = "In-Depth Structural & System Analysis"
+        summary_heading = "Key Takeaways & System Summary"
+        summary_text = f"Through careful analysis of '{clean_title}', understanding internal mechanisms and driving systems significantly optimizes operational efficiency and maintenance standards."
+        resource_text = "Original Video Resource Link"
+    else:
+        formatted_description = clean_desc if clean_desc else f"รายงานและรายละเอียดทางเทคนิคสำหรับหัวข้อ {clean_title}"
+        
+        overview_heading = f"ภาพรวมทางเทคนิค: {clean_title}"
+        overview_text = f"บทความนี้จัดทำขึ้นเพื่อเจาะลึกและวิเคราะห์การทำงานของหัวข้อ '{clean_title}' โดยครอบคลุมถึงโครงสร้างกลไกและระบบการทำงานเชิงวิศวกรรม เพื่อช่วยให้ผู้สนใจสามารถทำความเข้าใจองค์ประกอบและพารามิเตอร์สำคัญได้อย่างรายละเอียดครบถ้วน"
+        details_heading = "การวิเคราะห์โครงสร้างและการทำงานเชิงลึก"
+        summary_heading = "สรุปสาระสำคัญของระบบ"
+        summary_text = f"จากการศึกษาและวิเคราะห์กรณีของ '{clean_title}' พบว่าการทำความเข้าใจกลไกการขับเคลื่อนและโครงสร้างภายในจะช่วยเพิ่มประสิทธิภาพในการใช้งานและการบำรุงรักษาตามมาตรฐานวิศวกรรมได้อย่างแม่นยำ"
+        resource_text = "แหล่งข้อมูลอ้างอิงวิดีโอต้นฉบับ"
 
     html_content = f"""<article style="background-color: #ffffff; color: #2c3e50; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.8; margin: 0px auto; max-width: 850px; padding: 25px; border-radius: 12px; box-shadow: rgba(0, 0, 0, 0.05) 0px 4px 20px;">
     
@@ -161,8 +191,8 @@ def generate_post_content(video_id, title, description, blog_name):
     </div>
 
     <section style="background-color: #f7fafc; border-left: 4px solid #3182ce; border-radius: 0px 8px 8px 0px; margin-bottom: 35px; padding: 20px;">
-        <h2 style="color: #2b6cb0; font-size: 22px; font-weight: 600; margin-bottom: 12px; margin-top: 0px; line-height: 1.4;">ภาพรวมทางเทคนิค: {clean_title}</h2>
-        <p style="color: #4a5568; font-size: 16px; margin: 0px; text-align: justify;">บทความนี้จัดทำขึ้นเพื่อเจาะลึกและวิเคราะห์การทำงานของหัวข้อ '{clean_title}' โดยครอบคลุมถึงโครงสร้างกลไกและระบบการทำงานเชิงวิศวกรรม เพื่อช่วยให้ผู้สนใจสามารถทำความเข้าใจองค์ประกอบและพารามิเตอร์สำคัญได้อย่างรายละเอียดครบถ้วน</p>
+        <h2 style="color: #2b6cb0; font-size: 22px; font-weight: 600; margin-bottom: 12px; margin-top: 0px; line-height: 1.4;">{overview_heading}</h2>
+        <p style="color: #4a5568; font-size: 16px; margin: 0px; text-align: justify;">{overview_text}</p>
     </section>
 
     <section style="margin-bottom: 35px; text-align: center;">
@@ -173,17 +203,17 @@ def generate_post_content(video_id, title, description, blog_name):
     </section>
 
     <section style="background-color: #ffffff; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 35px; padding: 25px; box-shadow: rgba(0, 0, 0, 0.02) 0px 2px 8px;">
-        <h3 style="border-bottom: 2px solid #edf2f7; color: #2d3748; font-size: 19px; font-weight: 600; margin-bottom: 16px; margin-top: 0px; padding-bottom: 10px;">การวิเคราะห์โครงสร้างและการทำงานเชิงลึก</h3>
+        <h3 style="border-bottom: 2px solid #edf2f7; color: #2d3748; font-size: 19px; font-weight: 600; margin-bottom: 16px; margin-top: 0px; padding-bottom: 10px;">{details_heading}</h3>
         <p style="color: #4a5568; font-size: 15px; margin: 0px; white-space: pre-wrap; word-break: break-word; line-height: 1.7;">{formatted_description}</p>
     </section>
 
     <section style="background-color: #ebf8ff; border-radius: 8px; border: 1px solid #bee3f8; margin-bottom: 25px; padding: 20px;">
-        <h4 style="color: #2b6cb0; font-size: 16px; font-weight: 600; margin-bottom: 8px; margin-top: 0px;">สรุปสาระสำคัญของระบบ</h4>
-        <p style="color: #2d3748; font-size: 15px; margin: 0px; text-align: justify;">จากการศึกษาและวิเคราะห์กรณีของ '{clean_title}' พบว่าการทำความเข้าใจกลไกการขับเคลื่อนและโครงสร้างภายในจะช่วยเพิ่มประสิทธิภาพในการใช้งานและการบำรุงรักษาตามมาตรฐานวิศวกรรมได้อย่างแม่นยำ</p>
+        <h4 style="color: #2b6cb0; font-size: 16px; font-weight: 600; margin-bottom: 8px; margin-top: 0px;">{summary_heading}</h4>
+        <p style="color: #2d3748; font-size: 15px; margin: 0px; text-align: justify;">{summary_text}</p>
     </section>
 
     <footer style="border-top: 1px solid #e2e8f0; color: #718096; font-size: 13px; margin-top: 30px; padding-top: 15px; text-align: right;">
-        แหล่งข้อมูลอ้างอิงวิดีโอต้นฉบับ: <a href="{video_url}" style="color: #3182ce; font-weight: 600; text-decoration: none;" target="_blank" rel="noopener noreferrer">Resource Link</a>
+        {resource_text}: <a href="{video_url}" style="color: #3182ce; font-weight: 600; text-decoration: none;" target="_blank" rel="noopener noreferrer">Resource Link</a>
     </footer>
 </article>"""
     return html_content
@@ -191,10 +221,11 @@ def generate_post_content(video_id, title, description, blog_name):
 def process_blog(config, youtube, blogger, posted_videos, keyword_state):
     blog_id = config["blog_id"]
     blog_name = config["blog_name"]
+    lang = config.get("lang", "th")
     keywords = config["keywords"]
     labels = config.get("labels", [])
 
-    print(f"\n--- เริ่มต้นประมวลผลบล็อก: {blog_name} ({blog_id}) ---")
+    print(f"\n--- เริ่มต้นประมวลผลบล็อก: {blog_name} ({blog_id}) [ภาษา: {lang.upper()}] ---")
 
     if blog_id not in posted_videos:
         posted_videos[blog_id] = []
@@ -212,7 +243,7 @@ def process_blog(config, youtube, blogger, posted_videos, keyword_state):
             part="id,snippet",
             maxResults=10,
             type="video",
-            relevanceLanguage="en"
+            relevanceLanguage=lang
         ).execute()
     except Exception as e:
         print(f"[!] เกิดข้อผิดพลาดในการค้นหา YouTube: {e}")
@@ -235,8 +266,8 @@ def process_blog(config, youtube, blogger, posted_videos, keyword_state):
         title = item["snippet"]["title"]
         description = item["snippet"]["description"]
 
-        post_title = generate_post_title(blog_name, title)
-        post_content = generate_post_content(video_id, title, description, blog_name)
+        post_title = generate_post_title(blog_name, title, lang)
+        post_content = generate_post_content(video_id, title, description, blog_name, lang)
 
         body = {
             "kind": "blogger#post",
