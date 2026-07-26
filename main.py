@@ -119,7 +119,7 @@ def get_blogger_client():
             scopes=["https://www.googleapis.com/auth/blogger"]
         )
         creds.refresh(Request())
-        return googleapiclient.discovery.build("blogger", "3", credentials=creds)
+        return googleapiclient.discovery.build("blogger", "v3", credentials=creds)
     except Exception as e:
         print(f"[x] Error การยืนยันตัวตน Blogger API: {e}")
         return None
