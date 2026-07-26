@@ -3,7 +3,7 @@ import json
 import time
 import html
 import random
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 import googleapiclient.discovery
 import googleapiclient.errors
 from google.oauth2.credentials import Credentials
@@ -33,14 +33,14 @@ BLOG_CONFIGS = [
     {
         "blog_id": "7707792750976542809",
         "blog_name": "Machine & Mechanical Design (ใหม่)",
-        "lang": "th",
+        "lang": "en",
         "keywords": ["machine design", "mechanical design", "CAD design", "3D CAD modeling", "solidworks design"],
         "labels": ["MachineDesign", "Mechanical", "CAD"]
     },
     {
         "blog_id": "2962551177226991802",
         "blog_name": "Knowledge Engineering (ใหม่)",
-        "lang": "th",
+        "lang": "en",
         "keywords": ["knowledge Engineering", "engineering principles", "engineering fundamentals", "technical engineering", "engineering education"],
         "labels": ["Knowledge", "Engineering", "Technical"]
     },
@@ -52,6 +52,9 @@ BLOG_CONFIGS = [
         "labels": ["CNC", "Machining", "Milling"]
     }
 ]
+
+# Global scheduling tracker
+NEXT_SCHEDULED_TIME = datetime.now(timezone.utc)
 
 # ==========================================
 # HELPER FUNCTIONS FOR FILE I/O
@@ -219,6 +222,7 @@ def generate_post_content(video_id, title, description, blog_name, lang="th"):
     return html_content
 
 def process_blog(config, youtube, blogger, posted_videos, keyword_state):
+    global NEXT_SCHEDULED_TIME
     blog_id = config["blog_id"]
     blog_name = config["blog_name"]
     lang = config.get("lang", "th")
@@ -269,18 +273,30 @@ def process_blog(config, youtube, blogger, posted_videos, keyword_state):
         post_title = generate_post_title(blog_name, title, lang)
         post_content = generate_post_content(video_id, title, description, blog_name, lang)
 
+        # Calculate scheduled publish time (เว้นช่วงห่างกัน 1 ชั่วโมง)
+        publish_time_iso = NEXT_SCHEDULED_TIME.strftime("%Y-%m-%dT%H:%M:%S.000Z")
+
         body = {
             "kind": "blogger#post",
             "title": post_title,
             "content": post_content,
-            "labels": labels
+            "labels": labels,
+            "published": publish_time_iso
         }
 
         try:
-            post = blogger.posts().insert(blogId=blog_id, body=body).execute()
-            print(f"[+] [{added_count + 1}] โพสต์สำเร็จบนบล็อก ({blog_name}): {post_title} | ID: {post.get('id')}")
+            post = blogger.posts().insert(
+                blogId=blog_id,
+                body=body,
+                isDraft=False
+            ).execute()
+            
+            print(f"[+] [{added_count + 1}] ตั้งเวลาโพสต์สำเร็จบนบล็อก ({blog_name}): {post_title} | เวลาเผยแพร่ UTC: {publish_time_iso}")
             posted_videos[blog_id].append(video_id)
             added_count += 1
+            
+            # เพิ่มเวลาสำหรับโพสต์ถัดไปอีก 1 ชั่วโมง
+            NEXT_SCHEDULED_TIME += timedelta(hours=1)
             time.sleep(2)
         except googleapiclient.errors.HttpError as e:
             if e.resp.status == 429 or "quota" in str(e).lower():
