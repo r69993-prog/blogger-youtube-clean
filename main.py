@@ -32,21 +32,21 @@ BLOG_CONFIGS = [
     },
     {
         "blog_id": "7707792750976542809",
-        "blog_name": "Machine & Mechanical Design (ใหม่)",
+        "blog_name": "Machine & Mechanical Design",
         "lang": "en",
         "keywords": ["machine design", "mechanical design", "CAD design", "3D CAD modeling", "solidworks design"],
         "labels": ["MachineDesign", "Mechanical", "CAD"]
     },
     {
         "blog_id": "2962551177226991802",
-        "blog_name": "Knowledge Engineering (ใหม่)",
+        "blog_name": "Knowledge Engineering",
         "lang": "en",
         "keywords": ["knowledge Engineering", "engineering principles", "engineering fundamentals", "technical engineering", "engineering education"],
         "labels": ["Knowledge", "Engineering", "Technical"]
     },
     {
         "blog_id": "2882579450350054162",
-        "blog_name": "CNC Machine Center (ใหม่)",
+        "blog_name": "CNC Machine Center",
         "lang": "th",
         "keywords": ["CNC", "CNC milling", "CNC machining", "CNC center", "machining center"],
         "labels": ["CNC", "Machining", "Milling"]
