@@ -56,6 +56,9 @@ BLOG_CONFIGS = [
 # Global scheduling tracker
 NEXT_SCHEDULED_TIME = datetime.now(timezone.utc)
 
+# คำขยายสำหรับผสมค้นหาให้เจอคลิปหลากหลาย
+SEARCH_MODIFIERS = ["tutorial", "working principle", "animation", "overview", "system", "explained", "basics", "advanced"]
+
 # ==========================================
 # HELPER FUNCTIONS FOR FILE I/O
 # ==========================================
@@ -240,15 +243,21 @@ def process_blog(config, youtube, blogger, posted_videos, keyword_state):
     if blog_id not in posted_videos:
         posted_videos[blog_id] = []
 
-    keyword = get_next_keyword(blog_id, keywords, keyword_state)
-    print(f"กำลังค้นหาคำว่า: '{keyword}' สำหรับ {blog_name}...")
+    base_keyword = get_next_keyword(blog_id, keywords, keyword_state)
+    modifier = random.choice(SEARCH_MODIFIERS)
+    search_query = f"{base_keyword} {modifier}"
+    
+    order_type = random.choice(["relevance", "date"])
+
+    print(f"กำลังค้นหาคำว่า: '{search_query}' (เรียงตาม: {order_type}) สำหรับ {blog_name}...")
 
     try:
         search_response = youtube.search().list(
-            q=keyword,
+            q=search_query,
             part="id,snippet",
-            maxResults=15,
+            maxResults=50,
             type="video",
+            order=order_type,
             relevanceLanguage=lang
         ).execute()
     except Exception as e:
@@ -256,6 +265,7 @@ def process_blog(config, youtube, blogger, posted_videos, keyword_state):
         return
 
     videos = search_response.get("items", [])
+    random.shuffle(videos)
     print(f"พบวิดีโอจากการค้นหาสำหรับบล็อก {blog_name} ทั้งหมด {len(videos)} รายการ")
 
     added_count = 0
