@@ -20,35 +20,35 @@ BLOG_CONFIGS = [
         "blog_id": "7261621395427988771",
         "blog_name": "ระบบกลไก",
         "lang": "th",
-        "keywords": ["Mechanism design", "Kinematics", "Linkage mechanism", "Mechanical gears", "Mechanical transmission"],
+        "keywords": ["Mechanism design", "Kinematics", "Linkage mechanism", "Mechanical gears", "Mechanical transmission", "Cam mechanism", "Four bar linkage"],
         "labels": ["Mechanism", "Engineering", "Kinematics"]
     },
     {
         "blog_id": "6321192511447492789",
         "blog_name": "Industrial (English)",
         "lang": "en",
-        "keywords": ["industrial machinery", "factory automation", "manufacturing technology", "heavy industry", "industrial engineering"],
+        "keywords": ["industrial machinery", "factory automation", "manufacturing technology", "heavy industry", "industrial engineering", "smart manufacturing", "robotic assembly"],
         "labels": ["Industrial", "Automation", "Engineering"]
     },
     {
         "blog_id": "7707792750976542809",
         "blog_name": "Machine & Mechanical Design",
         "lang": "en",
-        "keywords": ["machine design", "mechanical design", "CAD design", "3D CAD modeling", "solidworks design"],
+        "keywords": ["machine design", "mechanical design", "CAD design", "3D CAD modeling", "solidworks design", "machine element design", "mechanical assembly"],
         "labels": ["MachineDesign", "Mechanical", "CAD"]
     },
     {
         "blog_id": "2962551177226991802",
         "blog_name": "Knowledge Engineering",
         "lang": "en",
-        "keywords": ["knowledge Engineering", "engineering principles", "engineering fundamentals", "technical engineering", "engineering education"],
+        "keywords": ["knowledge Engineering", "engineering principles", "engineering fundamentals", "technical engineering", "engineering education", "applied mechanics", "thermodynamics basics"],
         "labels": ["Knowledge", "Engineering", "Technical"]
     },
     {
         "blog_id": "2882579450350054162",
         "blog_name": "CNC Machine Center",
         "lang": "th",
-        "keywords": ["CNC", "CNC milling", "CNC machining", "CNC center", "machining center"],
+        "keywords": ["CNC", "CNC milling", "CNC machining", "CNC center", "machining center", "G-code programming", "CNC lathe"],
         "labels": ["CNC", "Machining", "Milling"]
     }
 ]
@@ -221,6 +221,12 @@ def generate_post_content(video_id, title, description, blog_name, lang="th"):
 </article>"""
     return html_content
 
+def get_next_keyword(blog_id, keywords, keyword_state):
+    last_idx = keyword_state.get(blog_id, -1)
+    next_idx = (last_idx + 1) % len(keywords)
+    keyword_state[blog_id] = next_idx
+    return keywords[next_idx]
+
 def process_blog(config, youtube, blogger, posted_videos, keyword_state):
     global NEXT_SCHEDULED_TIME
     blog_id = config["blog_id"]
@@ -234,18 +240,14 @@ def process_blog(config, youtube, blogger, posted_videos, keyword_state):
     if blog_id not in posted_videos:
         posted_videos[blog_id] = []
 
-    current_kw_idx = keyword_state.get(blog_id, 0) % len(keywords)
-    keyword = keywords[current_kw_idx]
-    
-    keyword_state[blog_id] = (current_kw_idx + 1) % len(keywords)
-
-    print(f"กำลังค้นหาคำว่า: {keyword} สำหรับ {blog_name}...")
+    keyword = get_next_keyword(blog_id, keywords, keyword_state)
+    print(f"กำลังค้นหาคำว่า: '{keyword}' สำหรับ {blog_name}...")
 
     try:
         search_response = youtube.search().list(
             q=keyword,
             part="id,snippet",
-            maxResults=10,
+            maxResults=15,
             type="video",
             relevanceLanguage=lang
         ).execute()
@@ -265,6 +267,7 @@ def process_blog(config, youtube, blogger, posted_videos, keyword_state):
 
         video_id = item["id"]["videoId"]
         if video_id in posted_videos[blog_id]:
+            print(f"[-] ข้ามวิดีโอซ้ำ (Video ID: {video_id})")
             continue
 
         title = item["snippet"]["title"]
@@ -273,7 +276,6 @@ def process_blog(config, youtube, blogger, posted_videos, keyword_state):
         post_title = generate_post_title(blog_name, title, lang)
         post_content = generate_post_content(video_id, title, description, blog_name, lang)
 
-        # Calculate scheduled publish time (เว้นช่วงห่างกัน 1 ชั่วโมง)
         publish_time_iso = NEXT_SCHEDULED_TIME.strftime("%Y-%m-%dT%H:%M:%S.000Z")
 
         body = {
@@ -295,7 +297,6 @@ def process_blog(config, youtube, blogger, posted_videos, keyword_state):
             posted_videos[blog_id].append(video_id)
             added_count += 1
             
-            # เพิ่มเวลาสำหรับโพสต์ถัดไปอีก 1 ชั่วโมง
             NEXT_SCHEDULED_TIME += timedelta(hours=1)
             time.sleep(2)
         except googleapiclient.errors.HttpError as e:
