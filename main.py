@@ -54,7 +54,7 @@ BLOG_CONFIGS = [
 ]
 
 # Global scheduling tracker
-NEXT_SCHEDULED_TIME = datetime.now(timezone.utc)
+NEXT_SCHEDULED_TIME = datetime.now(timezone.utc) + timedelta(hours=1)
 
 # คำขยายสำหรับผสมค้นหาให้เจอคลิปหลากหลาย
 SEARCH_MODIFIERS = ["tutorial", "working principle", "animation", "overview", "system", "explained", "basics", "advanced"]
@@ -269,7 +269,7 @@ def process_blog(config, youtube, blogger, posted_videos, keyword_state):
     print(f"พบวิดีโอจากการค้นหาสำหรับบล็อก {blog_name} ทั้งหมด {len(videos)} รายการ")
 
     added_count = 0
-    max_posts_per_run = 2
+    max_posts_per_run = 1
 
     for item in videos:
         if added_count >= max_posts_per_run:
@@ -307,7 +307,9 @@ def process_blog(config, youtube, blogger, posted_videos, keyword_state):
             posted_videos[blog_id].append(video_id)
             added_count += 1
             
-            NEXT_SCHEDULED_TIME += timedelta(hours=1)
+            # เว้นช่วงระหว่างโพสต์แบบสุ่ม 1 ถึง 2 ชั่วโมง (60 ถึง 120 นาที)
+            random_interval_minutes = random.randint(60, 120)
+            NEXT_SCHEDULED_TIME += timedelta(minutes=random_interval_minutes)
             time.sleep(2)
         except googleapiclient.errors.HttpError as e:
             if e.resp.status == 429 or "quota" in str(e).lower():
@@ -325,9 +327,13 @@ def process_blog(config, youtube, blogger, posted_videos, keyword_state):
 # MAIN ENTRY POINT
 # ==========================================
 def main():
+    global NEXT_SCHEDULED_TIME
     print("====================================")
     print(f"[!] เริ่มทำงานรอบอัตโนมัติ เวลา: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print("====================================")
+
+    # โพสต์แรกเริ่มหลังจากรันระบบไปแล้ว 1 ชั่วโมง
+    NEXT_SCHEDULED_TIME = datetime.now(timezone.utc) + timedelta(hours=1)
 
     posted_videos = load_json_file(POSTED_VIDEOS_FILE, {})
     keyword_state = load_json_file(KEYWORD_STATE_FILE, {})
