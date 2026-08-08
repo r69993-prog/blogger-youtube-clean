@@ -50,7 +50,7 @@ BLOG_CONFIGS = [
         "lang": "th",
         "keywords": ["CNC", "CNC milling", "CNC machining", "CNC center", "machining center", "G-code programming", "CNC lathe"],
         "labels": ["CNC", "Machining", "Milling"]
-    }
+    },
     {
         "blog_id": "2055991579883803861",
         "blog_name": "นิวแมติกส์และไฮดรอลิกส์",
