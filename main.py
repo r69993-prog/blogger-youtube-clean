@@ -51,6 +51,13 @@ BLOG_CONFIGS = [
         "keywords": ["CNC", "CNC milling", "CNC machining", "CNC center", "machining center", "G-code programming", "CNC lathe"],
         "labels": ["CNC", "Machining", "Milling"]
     }
+    {
+        "blog_id": "2055991579883803861",
+        "blog_name": "นิวแมติกส์และไฮดรอลิกส์",
+        "lang": "th",
+        "keywords": ["Pneumatics", "Hydraulics", "Actuator", "Valve", "Cylinder", "Pump", "Compressor", "Fluid power", "Air pressure", "Hose"],
+        "labels": ["Pneumatics", "Hydraulics", "Engineering"]
+    }
 ]
 
 # Global scheduling tracker
