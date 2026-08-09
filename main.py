@@ -143,6 +143,31 @@ def get_blogger_client():
         return None
 
 # ==========================================
+# RETRY & POSTING HELPER (เพิ่มส่วนนี้แก้ 429)
+# ==========================================
+def insert_post_with_retry(blogger, blog_id, body, max_retries=3):
+    """
+    ส่งโพสต์ลง Blogger พร้อมระบบลองใหม่อัตโนมัติ หากเจอ Rate Limit (429)
+    """
+    delay = 15  # รอนาทีละ 15 วินาทีในรอบแรก
+    for attempt in range(1, max_retries + 1):
+        try:
+            return blogger.posts().insert(
+                blogId=blog_id,
+                body=body,
+                isDraft=False
+            ).execute()
+        except googleapiclient.errors.HttpError as e:
+            is_rate_limit = e.resp.status in [429, 503] or "quota" in str(e).lower() or "rateLimitExceeded" in str(e).lower()
+            
+            if is_rate_limit and attempt < max_retries:
+                print(f"[!] ติด Rate Limit/Quota ชั่วคราว (429) จะลองใหม่อีกครั้งใน {delay} วินาที... (ครั้งที่ {attempt}/{max_retries})")
+                time.sleep(delay)
+                delay *= 2  # เพิ่มเวลารอเป็นเท่าตัว (15s -> 30s)
+            else:
+                raise e
+
+# ==========================================
 # CONTENT CREATION & PROCESSING
 # ==========================================
 def sanitize_text(text):
@@ -304,30 +329,30 @@ def process_blog(config, youtube, blogger, posted_videos, keyword_state):
         }
 
         try:
-            post = blogger.posts().insert(
-                blogId=blog_id,
-                body=body,
-                isDraft=False
-            ).execute()
+            # ใช้นวัตกรรมใหม่ insert_post_with_retry เพื่อป้องกัน 429
+            post = insert_post_with_retry(blogger, blog_id, body, max_retries=3)
             
             print(f"[+] [{added_count + 1}] ตั้งเวลาโพสต์สำเร็จบนบล็อก ({blog_name}): {post_title} | เวลาเผยแพร่ UTC: {publish_time_iso}")
             posted_videos[blog_id].append(video_id)
             added_count += 1
             
-            # เว้นช่วงระหว่างโพสต์แบบสุ่ม 1 ถึง 2 ชั่วโมง (60 ถึง 120 นาที)
+            # เว้นช่วงระหว่างโพสต์แบบสุ่ม 1 ถึง 2 ชั่วโมง
             random_interval_minutes = random.randint(60, 120)
             NEXT_SCHEDULED_TIME += timedelta(minutes=random_interval_minutes)
-            time.sleep(2)
+            
+            # หน่วงเวลาเล็กน้อยหลังโพสต์สำเร็จ
+            time.sleep(5)
         except googleapiclient.errors.HttpError as e:
             if e.resp.status == 429 or "quota" in str(e).lower():
-                print(f"[!] เกิดข้อผิดพลาดในการโพสต์ลง Blogger: {e}")
-                print("[!] Blogger API Quota เต็ม ข้ามไปประมวลผลขั้นตอนถัดไป")
+                print(f"[!] Blogger API Quota เต็มของวัน หรือโดนบล็อกเกินกำหนด ข้ามไปบล็อกถัดไป")
                 break
             else:
                 print(f"[!] เกิดข้อผิดพลาดในการโพสต์ลง Blogger: {e}")
         except Exception as e:
             print(f"[!] เกิดข้อผิดพลาดที่ไม่คาดคิด: {e}")
 
+    # หน่วงเวลา 5 วินาทีเมื่อเปลี่ยนไปประมวลผลบล็อกถัดไป
+    time.sleep(5)
     print(f"เสร็จสิ้นการทำงานบล็อก: {blog_name} เพิ่มได้ {added_count} บทความ")
 
 # ==========================================
