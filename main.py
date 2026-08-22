@@ -87,7 +87,7 @@ def save_json_file(filename, data):
         print(f"[!] ไม่สามารถบันทึกไฟล์ {filename} ได้: {e}")
 
 # ==========================================
-# CLIENT INITIALIZATION FUNCTIONS
+# CLIENT INITIALIZATION & VALIDATION FUNCTIONS
 # ==========================================
 def get_youtube_client():
     api_keys = []
@@ -142,8 +142,29 @@ def get_blogger_client():
         print(f"[x] Error การยืนยันตัวตน Blogger API: {e}")
         return None
 
+def validate_blog_status(blogger, blog_id):
+    """
+    ตรวจสอบสถานะการมีอยู่และสิทธิ์การใช้งานบล็อกผ่าน Blogger API ก่อนทำรายการ
+    """
+    try:
+        blog_info = blogger.blogs().get(blogId=blog_id).execute()
+        blog_name = blog_info.get("name", blog_id)
+        print(f"[+] ตรวจสอบสถานะบล็อก '{blog_name}' ({blog_id}) สำเร็จ: บล็อกพร้อมใช้งาน")
+        return True
+    except googleapiclient.errors.HttpError as e:
+        if e.resp.status == 404:
+            print(f"[x] Error: ไม่พบบล็อก ID {blog_id} (Blog Not Found หรือถูกลบไปแล้ว)")
+        elif e.resp.status == 403:
+            print(f"[x] Error: ไม่มีสิทธิ์เข้าถึงบล็อก ID {blog_id} (Access Forbidden)")
+        else:
+            print(f"[x] Error ในการตรวจสอบสถานะบล็อก ID {blog_id}: {e}")
+        return False
+    except Exception as e:
+        print(f"[x] เกิดข้อผิดพลาดที่ไม่คาดคิดขณะตรวจสอบสถานะบล็อก ID {blog_id}: {e}")
+        return False
+
 # ==========================================
-# RETRY & POSTING HELPER (เพิ่มส่วนนี้แก้ 429)
+# RETRY & POSTING HELPER
 # ==========================================
 def insert_post_with_retry(blogger, blog_id, body, max_retries=3):
     """
@@ -271,6 +292,11 @@ def process_blog(config, youtube, blogger, posted_videos, keyword_state):
     labels = config.get("labels", [])
 
     print(f"\n--- เริ่มต้นประมวลผลบล็อก: {blog_name} ({blog_id}) [ภาษา: {lang.upper()}] ---")
+
+    # ตรวจสอบสถานะของบล็อกเป็นลำดับแรกสุด
+    if not validate_blog_status(blogger, blog_id):
+        print(f"[!] ข้ามการประมวลผลสำหรับบล็อก: {blog_name} เนื่องจากสถานะบล็อกไม่พร้อมใช้งาน")
+        return
 
     if blog_id not in posted_videos:
         posted_videos[blog_id] = []
