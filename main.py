@@ -25,7 +25,7 @@ BLOG_CONFIGS = [
     },
     {
         "blog_id": "6321192511447492789",
-        "blog_name": "Industrial (English)",
+        "blog_name": "Industrial technology ",
         "lang": "en",
         "keywords": ["industrial machinery", "factory automation", "manufacturing technology", "heavy industry", "industrial engineering", "smart manufacturing", "robotic assembly"],
         "labels": ["Industrial", "Automation", "Engineering"]
