@@ -31,27 +31,6 @@ BLOG_CONFIGS = [
         "labels": ["Industrial", "Automation", "Engineering"]
     },
     {
-        "blog_id": "7707792750976542809",
-        "blog_name": "Machine & Mechanical Design",
-        "lang": "en",
-        "keywords": ["machine design", "mechanical design", "CAD design", "3D CAD modeling", "solidworks design", "machine element design", "mechanical assembly"],
-        "labels": ["MachineDesign", "Mechanical", "CAD"]
-    },
-    {
-        "blog_id": "2962551177226991802",
-        "blog_name": "Knowledge Engineering",
-        "lang": "en",
-        "keywords": ["knowledge Engineering", "engineering principles", "engineering fundamentals", "technical engineering", "engineering education", "applied mechanics", "thermodynamics basics"],
-        "labels": ["Knowledge", "Engineering", "Technical"]
-    },
-    {
-        "blog_id": "2882579450350054162",
-        "blog_name": "CNC Machine Center",
-        "lang": "th",
-        "keywords": ["CNC", "CNC milling", "CNC machining", "CNC center", "machining center", "G-code programming", "CNC lathe"],
-        "labels": ["CNC", "Machining", "Milling"]
-    },
-    {
         "blog_id": "2055991579883803861",
         "blog_name": "นิวแมติกส์และไฮดรอลิกส์",
         "lang": "th",
